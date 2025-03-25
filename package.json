@@ -16,7 +16,7 @@
     "context",
     "store"
   ],
-  "author": "b3nr0w",
+  "author": "b3ncr0w",
   "license": "MIT",
   "description": "React Fast Context Store",
   "devDependencies": {
