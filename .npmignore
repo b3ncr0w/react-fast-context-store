@@ -1,0 +1,9 @@
+/node_modules
+/src
+/examples
+
+.env
+.DS_Store
+*.tgz
+
+tsconfig.json

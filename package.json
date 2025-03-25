@@ -1,0 +1,31 @@
+{
+  "name": "react-fast-context-store",
+  "version": "1.0.0",
+  "source": "src/index.tsx",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.tsx --format esm,cjs --dts --external react",
+    "watch": "tsup src/index.tsx --format esm,cjs --dts --external react --watch",
+    "prewatch": "mkdir -p dist"
+  },
+  "keywords": [
+    "react",
+    "fast",
+    "context",
+    "store"
+  ],
+  "author": "b3nr0w",
+  "license": "MIT",
+  "description": "React Fast Context Store",
+  "devDependencies": {
+    "@swc/core": "^1.11.13",
+    "@types/react": "^18.0.0",
+    "tsup": "^8.0.2",
+    "typescript": "^5.6.3"
+  },
+  "peerDependencies": {
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0"
+  }
+}
