@@ -5,6 +5,37 @@ export const useRerender = () => {
   return () => setTick((tick) => tick + 1);
 };
 
+function deepClone<T>(obj: T, visited = new WeakMap()): T {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  // Handle circular references
+  if (visited.has(obj)) {
+    return visited.get(obj);
+  }
+
+  // Handle arrays
+  if (Array.isArray(obj)) {
+    const clone: any[] = [];
+    visited.set(obj, clone);
+    for (let i = 0; i < obj.length; i++) {
+      clone[i] = deepClone(obj[i], visited);
+    }
+    return clone as T;
+  }
+
+  // Handle objects
+  const clone = {} as T;
+  visited.set(obj, clone);
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      clone[key] = deepClone(obj[key], visited);
+    }
+  }
+  return clone;
+}
+
 export function getDataWithSelector(obj: any, selector?: string) {
   if (!obj) return null;
   if (!selector) return obj;
@@ -19,8 +50,7 @@ export function setDataWithSelector(obj: any, value: any, selector?: string) {
   const keys = selector.split('.');
   const lastKey = keys.pop()!;
 
-  // Create a deep copy of the object
-  const newObj = JSON.parse(JSON.stringify(obj));
+  const newObj = deepClone(obj);
   const target = keys.reduce((acc, key) => acc?.[key], newObj);
 
   if (target) {
