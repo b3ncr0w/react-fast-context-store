@@ -1,6 +1,6 @@
 {
   "name": "react-fast-context-store",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "source": "src/index.tsx",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -17,7 +17,10 @@
     "context",
     "store"
   ],
-  "author": "b3ncr0w",
+  "author": {
+    "name": "b3ncr0w",
+    "email": "b3ncr0w@gmail.com"
+  },
   "license": "MIT",
   "description": "React Fast Context Store",
   "devDependencies": {
