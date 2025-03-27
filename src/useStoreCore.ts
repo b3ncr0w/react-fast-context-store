@@ -1,30 +1,21 @@
-import { useCallback, useRef } from "react";
-import { SettingsType, UpdatePropsType } from "./types";
+import { useCallback, useRef } from 'react';
+import { SubscriberType } from './types';
 
 export function useStoreCore<T>(initData?: T | object) {
   const store = useRef<T | object>(initData || {});
-  const subscribers = useRef(
-    new Set<{
-      update: (props: UpdatePropsType) => void;
-      subSettings?: SettingsType;
-    }>()
-  );
+  const subscribers = useRef(new Set<SubscriberType>());
 
-  const subscribe = useCallback(
-    (update: (props: UpdatePropsType) => void, subSettings?: SettingsType) => {
-      const subscriber = { update, subSettings };
+  const subscribe = useCallback((subscriber: SubscriberType) => {
+    subscribers.current.add(subscriber as SubscriberType);
+    return () => subscribers.current.delete(subscriber as SubscriberType);
+  }, []);
 
-      subscribers.current.add(subscriber);
-      return () => subscribers.current.delete(subscriber);
-    },
-    []
-  );
-
-  const notify = useCallback(({ selector, settings }: UpdatePropsType) => {
-    subscribers.current.forEach(({ update, subSettings }) =>
-      update({ selector, settings: { ...settings, ...subSettings } })
+  const notify = useCallback((selector?: string) => {
+    subscribers.current.forEach(({ onUpdate, baseSelector, settings }) =>
+      onUpdate({ selector, baseSelector, settings })
     );
   }, []);
+
   const get = useCallback(() => store.current, []);
 
   const set = useCallback((value: T | object) => {
