@@ -5,39 +5,45 @@ import { createStore } from '../index';
 
 describe('Store', () => {
   type TestStore = {
-    string: string;
-    number: number;
-    array: string[];
-    nested: {
-      value: string;
-      deep: {
-        value: number;
+    data1: string;
+    data2: {
+      data1: string;
+    };
+    data3: {
+      data1: string;
+      data2: {
+        data1: string;
       };
     };
+    array1: string[];
   };
 
   const initialData: TestStore = {
-    string: 'initial',
-    number: 42,
-    array: ['a', 'b', 'c'],
-    nested: {
-      value: 'nested',
-      deep: {
-        value: 100
+    data1: 'initial1',
+    data2: {
+      data1: 'initial2'
+    },
+    data3: {
+      data1: 'initial3',
+      data2: {
+        data1: 'initial4'
       }
-    }
+    },
+    array1: ['a', 'b', 'c']
   };
 
   function createTestComponent(useStore: any) {
     return function TestComponent({ 
       onMount, 
-      selector 
+      selector,
+      settings
     }: { 
       onMount?: (data: any, setStoreData?: (value: any, selector?: string) => void) => void;
       selector?: string;
+      settings?: { observedSelectors?: string[], ignoredSelectors?: string[] };
     }) {
       const [getStoreData, setStoreData] = useStore();
-      const data = getStoreData(selector as any);
+      const data = getStoreData(selector as any, settings);
       
       React.useEffect(() => {
         onMount?.(data, setStoreData);
@@ -47,112 +53,260 @@ describe('Store', () => {
     }
   }
 
-  it('should initialize with initial data', () => {
-    const [StoreProvider, useStore] = createStore<TestStore>(initialData);
-    const TestComponent = createTestComponent(useStore);
-    let mountData: any;
-    let wholeStoreData: any;
+  describe('Basic Selector Tests', () => {
+    it('should rerender component with no selector on any store update', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let rerenderCount = 0;
+      let setData: any;
 
-    render(
-      <StoreProvider>
-        <TestComponent onMount={(data) => { mountData = data; }} />
-        <TestComponent onMount={(data) => { wholeStoreData = data; }} />
-      </StoreProvider>
-    );
+      render(
+        <StoreProvider>
+          <TestComponent 
+            onMount={(_, set) => { 
+              setData = set;
+              rerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
 
-    expect(mountData).toEqual(initialData);
-    expect(wholeStoreData).toEqual(initialData);
-  });
+      await act(async () => void setData('new value', 'data1'));
+      expect(rerenderCount).toBe(2); // Initial mount + update
+    });
 
-  it('should update primitive values and update whole store', async () => {
-    const [StoreProvider, useStore] = createStore<TestStore>(initialData);
-    const TestComponent = createTestComponent(useStore);
-    let mountData: any;
-    let wholeStoreData: any;
-    let setData: any;
+    it('should only rerender component with matching selector', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let rerenderCount = 0;
+      let setData: any;
 
-    render(
-      <StoreProvider>
-        <TestComponent 
-          selector="string"
-          onMount={(data) => { mountData = data; }} 
-        />
-        <TestComponent onMount={(data) => { wholeStoreData = data; }} />
-        <TestComponent onMount={(_, set) => { setData = set; }} />
-      </StoreProvider>
-    );
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="data1"
+            onMount={(_, set) => { 
+              setData = set;
+              rerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
 
-    await act(async () => void setData('new string', 'string'));
+      await act(async () => void setData('new value', 'data1'));
+      expect(rerenderCount).toBe(2); // Initial mount + update
 
-    expect(mountData).toBe('new string');
-    expect(wholeStoreData.string).toBe('new string');
-    expect(wholeStoreData.number).toBe(42);
-    expect(wholeStoreData.array).toEqual(['a', 'b', 'c']);
-    expect(wholeStoreData.nested).toEqual({
-      value: 'nested',
-      deep: {
-        value: 100
-      }
+      await act(async () => void setData('new value', 'data2.data1'));
+      expect(rerenderCount).toBe(2); // Should not rerender
+    });
+
+    it('should rerender component with parent selector when child changes', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let rerenderCount = 0;
+      let setData: any;
+
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="data3"
+            onMount={(_, set) => { 
+              setData = set;
+              rerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
+
+      await act(async () => void setData('new value', 'data3.data2.data1'));
+      expect(rerenderCount).toBe(2); // Initial mount + update
     });
   });
 
-  it('should update nested values and update whole store', async () => {
-    const [StoreProvider, useStore] = createStore<TestStore>(initialData);
-    const TestComponent = createTestComponent(useStore);
-    let mountData: any;
-    let wholeStoreData: any;
-    let setData: any;
+  describe('Observed Selectors Tests', () => {
+    it('should never rerender with empty observedSelectors', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let rerenderCount = 0;
+      let setData: any;
 
-    render(
-      <StoreProvider>
-        <TestComponent 
-          selector="nested.value"
-          onMount={(data) => { mountData = data; }} 
-        />
-        <TestComponent onMount={(data) => { wholeStoreData = data; }} />
-        <TestComponent onMount={(_, set) => { setData = set; }} />
-      </StoreProvider>
-    );
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="data1"
+            settings={{ observedSelectors: [] }}
+            onMount={(_, set) => { 
+              setData = set;
+              rerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
 
-    await act(async () => void setData('new nested', 'nested.value'));
+      await act(async () => void setData('new value', 'data1'));
+      expect(rerenderCount).toBe(1); // Only initial mount
+    });
 
-    expect(mountData).toBe('new nested');
-    expect(wholeStoreData.string).toBe('initial');
-    expect(wholeStoreData.number).toBe(42);
-    expect(wholeStoreData.array).toEqual(['a', 'b', 'c']);
-    expect(wholeStoreData.nested.value).toBe('new nested');
-    expect(wholeStoreData.nested.deep.value).toBe(100);
+    it('should rerender only for matching observedSelectors', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let rerenderCount = 0;
+      let setData: any;
+
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="data3"
+            settings={{ observedSelectors: ['data3.data1'] }}
+            onMount={(_, set) => { 
+              setData = set;
+              rerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
+
+      await act(async () => void setData('new value', 'data3.data1'));
+      expect(rerenderCount).toBe(2); // Initial mount + update
+
+      await act(async () => void setData('new value', 'data3.data2.data1'));
+      expect(rerenderCount).toBe(2); // Should not rerender
+    });
+
+    it('should handle wildcard patterns in observedSelectors', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let rerenderCount = 0;
+      let setData: any;
+
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="data3"
+            settings={{ observedSelectors: ['data3.*'] }}
+            onMount={(_, set) => { 
+              setData = set;
+              rerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
+
+      await act(async () => void setData('new value', 'data3.data1'));
+      expect(rerenderCount).toBe(2); // Initial mount + update
+
+      await act(async () => void setData('new value', 'data3.data2.data1'));
+      expect(rerenderCount).toBe(2); // Should not rerender (not direct child)
+    });
   });
 
-  it('should update with function updater and update whole store', async () => {
-    const [StoreProvider, useStore] = createStore<TestStore>(initialData);
-    const TestComponent = createTestComponent(useStore);
-    let mountData: any;
-    let wholeStoreData: any;
-    let setData: any;
+  describe('Ignored Selectors Tests', () => {
+    it('should not rerender for ignored selectors', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let rerenderCount = 0;
+      let setData: any;
 
-    render(
-      <StoreProvider>
-        <TestComponent 
-          selector="number"
-          onMount={(data) => { mountData = data; }} 
-        />
-        <TestComponent onMount={(data) => { wholeStoreData = data; }} />
-        <TestComponent onMount={(_, set) => { setData = set; }} />
-      </StoreProvider>
-    );
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="data3"
+            settings={{ ignoredSelectors: ['data3.data1'] }}
+            onMount={(_, set) => { 
+              setData = set;
+              rerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
 
-    await act(async () => void setData((prev: number) => prev + 1, 'number'));
+      await act(async () => void setData('new value', 'data3.data1'));
+      expect(rerenderCount).toBe(1); // Only initial mount
 
-    expect(mountData).toBe(43);
-    expect(wholeStoreData.string).toBe('initial');
-    expect(wholeStoreData.number).toBe(43);
-    expect(wholeStoreData.array).toEqual(['a', 'b', 'c']);
-    expect(wholeStoreData.nested).toEqual({
-      value: 'nested',
-      deep: {
-        value: 100
-      }
+      await act(async () => void setData('new value', 'data3.data2.data1'));
+      expect(rerenderCount).toBe(2); // Should rerender for non-ignored path
+    });
+  });
+
+  describe('Combined Settings Tests', () => {
+    it('should respect both observed and ignored selectors', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let rerenderCount = 0;
+      let setData: any;
+
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="data3"
+            settings={{ 
+              observedSelectors: ['data3.*'],
+              ignoredSelectors: ['data3.data1']
+            }}
+            onMount={(_, set) => { 
+              setData = set;
+              rerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
+
+      await act(async () => void setData('new value', 'data3.data1'));
+      expect(rerenderCount).toBe(1); // Only initial mount (ignored)
+
+      await act(async () => void setData('new value', 'data3.data2'));
+      expect(rerenderCount).toBe(2); // Should rerender (observed and not ignored)
+    });
+  });
+
+  describe('Array Operation Tests', () => {
+    it('should rerender on array operations', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let rerenderCount = 0;
+      let setData: any;
+
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="array1"
+            onMount={(_, set) => { 
+              setData = set;
+              rerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
+
+      await act(async () => void setData((prev: string[]) => [...prev, 'd'], 'array1'));
+      expect(rerenderCount).toBe(2); // Initial mount + update
+
+      await act(async () => void setData((prev: string[]) => prev.slice(0, -1), 'array1'));
+      expect(rerenderCount).toBe(3); // Another update
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle invalid selectors gracefully', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let rerenderCount = 0;
+      let setData: any;
+
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="invalid.path"
+            onMount={(_, set) => { 
+              setData = set;
+              rerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
+
+      await act(async () => void setData('new value', 'data1'));
+      expect(rerenderCount).toBe(1); // Only initial mount
     });
   });
 }); 

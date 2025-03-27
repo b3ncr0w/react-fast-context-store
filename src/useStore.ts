@@ -33,7 +33,6 @@ export function useStore<T = any>(
         ) || [];
 
       if (
-        selector !== undefined &&
         baseSelector !== undefined &&
         [...relatedSelectors, selector].includes(baseSelector) === false
       )
