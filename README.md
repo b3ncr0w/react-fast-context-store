@@ -1,55 +1,18 @@
 # React Fast Context Store
 
-A lightweight and performant state management solution for React applications using Context API with optimized re-renders.
+A lightweight state management solution for React applications using Context API with optimized re-renders.
 
 ## Why React Fast Context Store?
 
-While React's Context API is great for sharing state, it has limitations when dealing with frequent updates:
+React's Context API has limitations with frequent updates:
+- All consuming components re-render on any context change
+- No granular control over which parts of the state components depend on
+- Performance issues with high-frequency updates
 
-### The Problem with Plain Context API
-
-1. **Unnecessary Re-renders**: When using plain Context API, any change to the context value causes all consuming components to re-render, even if they only depend on a small part of the state.
-2. **Performance Impact**: For high-frequency updates (like mouse movement or drag events), this can lead to significant performance issues.
-3. **No Granular Control**: Components can't specify which parts of the context they care about.
-
-### How React Fast Context Store Solves These Issues
-
-1. **Selective Updates**: Components only re-render when their specific dependencies change:
-   ```typescript
-   // Only re-renders when mouseX changes
-   const [mouseX] = useStore("mousePosition.x");
-   
-   // Only re-renders when mouseY changes
-   const [mouseY] = useStore("mousePosition.y");
-   ```
-
-2. **Optimized for High-Frequency Updates**: Perfect for real-time applications:
-   ```typescript
-   function DraggableComponent() {
-     const [, setPosition] = useStore();
-     
-     const handleMouseMove = (e: MouseEvent) => {
-       // Updates only trigger re-renders in components that depend on position
-       setPosition({ x: e.clientX, y: e.clientY }, "position");
-     };
-     
-     return <div onMouseMove={handleMouseMove}>...</div>;
-   }
-   ```
-
-3. **Fine-grained Control**: Components can specify exactly which parts of the state they want to observe or ignore:
-   ```typescript
-   function OptimizedComponent() {
-     const [, setStore] = useStore({
-       observedSelectors: ["position.x"], // Only observe x position
-       ignoredSelectors: ["position.y"]   // Ignore y position changes
-     });
-     
-     return <div>...</div>;
-   }
-   ```
-
-4. **Memory Efficient**: No unnecessary state copies or complex state management overhead.
+React Fast Context Store solves these by:
+- Selective updates: Components only re-render when their specific dependencies change
+- Fine-grained control: Components can specify which parts of the state to observe or ignore
+- Optimized for high-frequency updates: Perfect for real-time applications
 
 ## Features
 
@@ -58,7 +21,6 @@ While React's Context API is great for sharing state, it has limitations when de
 - 📦 TypeScript support
 - 🎯 Granular state updates
 - 🔍 Fine-grained control over component updates
-- 🎨 Easy to use API
 
 ## Installation
 
@@ -73,22 +35,16 @@ yarn add react-fast-context-store
 1. Create a store with your initial state:
 
 ```typescript
-import { createStore } from "react-fast-context-store";
+import { createStore } from 'react-fast-context-store';
 
 type StoreType = {
-  count: number;
-  user: {
-    name: string;
-    email: string;
-  };
+  mousePosition: { x: number; y: number };
+  selectedItem: { id: string; position: { x: number; y: number } } | null;
 };
 
 const [StoreProvider, useStore] = createStore<StoreType>({
-  count: 0,
-  user: {
-    name: "John Doe",
-    email: "john@example.com"
-  }
+  mousePosition: { x: 0, y: 0 },
+  selectedItem: null,
 });
 ```
 
@@ -107,14 +63,20 @@ function App() {
 3. Use the store in your components:
 
 ```typescript
-function Counter() {
-  const [count, setCount] = useStore("count");
-  
-  return (
-    <button onClick={() => setCount(count + 1)}>
-      Count: {count}
-    </button>
-  );
+// Component that only rerenders when mouseX changes
+function MouseXDisplay() {
+  const [getData] = useStore();
+  const x = getData('mousePosition.x');
+  return <div>Mouse X: {x}</div>;
+}
+
+// Component that rerenders when selected item changes, but not when any other data of the item changes
+function SelectedItemDisplay() {
+  const [getData] = useStore();
+  const selectedItem = getData('selectedItem', {
+    observedSelectors: ['selectedItem.id']
+  });
+  return <div>Selected: {selectedItem?.id}</div>;
 }
 ```
 
@@ -133,64 +95,70 @@ const [StoreProvider, useStore] = createStore<StoreType>(initialState);
 Hook to access and update the store state.
 
 ```typescript
-// Get and set a specific value
-const [value, setValue] = useStore("path.to.value");
+const [getData, setData] = useStore();
 
-// Get and set multiple values
-const [values, setValues] = useStore(["path1", "path2"]);
+// Get data with selector
+const value = getData('path.to.value');
 
-// Get and set the entire store
-const [store, setStore] = useStore();
+// Get data with settings
+const value = getData('path.to.value', {
+  observedSelectors: ['path.to.value'],
+  ignoredSelectors: ['path.to.value'],
+});
 ```
 
-### Component Settings
+### Rerender Behavior
 
-You can control which parts of the store a component should observe:
+1. **No Selector**:
+   ```typescript
+   const data = getData();
+   ```
+   - Gets whole store data
+   - Rerenders on every store update
 
-```typescript
-function MyComponent() {
-  const [, setStore] = useStore({
-    observedSelectors: ["user.name"], // Only re-render when user.name changes
-    ignoredSelectors: ["user.email"]  // Ignore changes to user.email
-  });
-  
-  return <div>...</div>;
-}
-```
+2. **With Selector**:
+   ```typescript
+   const data = getData('data3.data2.data1');
+   ```
+   - Rerenders when the exact selector is used in setter
+   - Other components using parent selectors will also rerender
+   - Example: `setData(newValue, 'data3.data2.data1')` triggers rerender for:
+     - Components with selector `data3.data2.data1`
+     - Components with selector `data3.data2`
+     - Components with selector `data3`
 
-## Advanced Usage
+3. **With Empty observedSelectors**:
+   ```typescript
+   const data = getData('data', { observedSelectors: [] });
+   ```
+   - Only renders once when mounted
+   - Never rerenders on store updates
 
-### Updating Nested State
+4. **With observedSelectors**:
+   ```typescript
+   const data = getData('data', { 
+     observedSelectors: ['data.items.*', 'data.settings.**'] 
+   });
+   ```
+   - Rerenders only when data is changed using matching selectors
+   - Other components using parent selectors ('data', 'data.items', 'data.settings') will not rerender
+   - Patterns:
+     - `*` matches any single level (e.g., `items.*` matches `items.0`, `items.1`)
+     - `**` matches any level (e.g., `settings.**` matches `settings.theme.color`)
+   - Example: `setData(newValue, 'data.items.0')` will trigger rerender because `data.items.*` matches the selector
 
-```typescript
-const [, setStore] = useStore();
-
-// Update nested state
-setStore("new value", "user.name");
-
-// Update with previous state
-setStore(prev => ({ ...prev, count: prev.count + 1 }), "user");
-```
-
-### Array Operations
-
-```typescript
-const [, setStore] = useStore();
-
-// Add to array
-setStore(prev => [...prev, newItem], "items");
-
-// Remove from array
-setStore(prev => prev.filter(item => item.id !== id), "items");
-```
-
-## Performance Optimization
-
-The store is designed to minimize unnecessary re-renders by:
-- Only updating components that depend on changed values
-- Using selective updates with path-based state modifications
-- Providing fine-grained control over which parts of the state a component observes
+5. **With ignoredSelectors**:
+   ```typescript
+   const data = getData('data', { 
+     ignoredSelectors: ['data.temp', 'data.cache.*'] 
+   });
+   ```
+   - Rerenders on changes that match the selector or observedSelectors, except for ignored selectors
+   - Example: With selector 'data' and ignoredSelectors ['data.temp']:
+     - `setData(newValue, 'data.temp')` will NOT trigger rerender
+     - `setData(newValue, 'data.other')` will trigger rerender
+   - Supports same patterns as observedSelectors
 
 ## License
 
-MIT 
+MIT

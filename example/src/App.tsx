@@ -17,9 +17,18 @@ const App = () => {
       <div style={{ display: 'flex', gap: '10px' }}>
         <Component selector='data2'></Component>
         <Component selector='data3'></Component>
-        <Component selector='data3' settings={{ ignoredSelectors: ['data3.data1'] }}></Component>
-        <Component selector='data3' settings={{ observedSelectors: ['data3.*'] }}></Component>
-        <Component selector='data3' settings={{ observedSelectors: ['data3.**'] }}></Component>
+        <Component
+          selector='data3'
+          settings={{ ignoredSelectors: ['data3.data1'] }}
+        ></Component>
+        <Component
+          selector='data3'
+          settings={{ observedSelectors: ['data3.*'] }}
+        ></Component>
+        <Component
+          selector='data3'
+          settings={{ observedSelectors: ['data3.**'] }}
+        ></Component>
         <Component selector='data3.data2'></Component>
       </div>
 
@@ -27,10 +36,7 @@ const App = () => {
         <Component selector='array1'>
           <button
             onClick={() =>
-              setData(
-                (prev) => [...prev, 'el' + (prev.length + 1)],
-                'array1'
-              )
+              setData((prev) => [...prev, 'el' + (prev.length + 1)], 'array1')
             }
           >
             Add
@@ -75,6 +81,15 @@ const App = () => {
             onChange={(e) => setData(e.target.value, 'data3.data2.data1')}
           />
         </Component>
+        <button
+          onClick={() => {
+            setData(String(Math.random()), 'data1');
+            setData((prev) => [...prev, 'el' + (prev.length + 1)], 'array1');
+          }}
+        >
+          Change multiple data at once<br />
+          (data1 and array1)
+        </button>
       </div>
     </div>
   );
