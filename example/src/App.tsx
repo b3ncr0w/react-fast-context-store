@@ -90,6 +90,25 @@ const App = () => {
           Change multiple data at once<br />
           (data1 and array1)
         </button>
+        <button
+          onClick={() => {
+            setData({
+              array1: ["el1-replaced", "el2-replaced", "el3-replaced"],
+              data1: "data1-replaced",
+              data2: {
+                data1: "data2-1-replaced",
+              },
+              data3: {
+                data1: "data3-1-replaced",
+                data2: {
+                  data1: "data3-2-1-replaced",
+                },
+              },
+            });
+          }}
+        >
+          Replace whole store
+        </button>
       </div>
     </div>
   );

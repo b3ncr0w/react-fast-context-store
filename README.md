@@ -76,7 +76,46 @@ function SelectedItemDisplay() {
   const selectedItem = getData('selectedItem', {
     observedSelectors: ['selectedItem.id']
   });
-  return <div>Selected: {selectedItem?.id}</div>;
+  return (
+    <div>
+      Selected: {selectedItem?.id}
+      Position on select: ({selectedItem.position.x}, {selectedItem.position.y})
+    </div>
+  );
+}
+
+// Component that updates the store using selectors
+function MouseTracker() {
+  const [, setData] = useStore();
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setData(e.clientX, 'mousePosition.x');
+      setData(e.clientY, 'mousePosition.y');
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  return null;
+}
+
+// Component that can be selected and updates its position in the store
+function SelectableItem({ id }: { id: string }) {
+  const [, setData] = useStore();
+
+  const handleClick = (e: React.MouseEvent) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setData(id, 'selectedItem.id');
+    setData({ x: rect.left, y: rect.top }, 'selectedItem.position');
+  };
+
+  return (
+    <div onClick={handleClick}>
+      Item {id}
+    </div>
+  );
 }
 ```
 
@@ -106,6 +145,23 @@ const value = getData('path.to.value', {
   ignoredSelectors: ['path.to.value'],
 });
 ```
+
+### setData
+
+Function to update store values with selective updates.
+
+```typescript
+// Update a single value
+setData(newValue, 'path.to.value');
+
+// Update without selector (replaces entire store)
+setData(newStoreState);
+```
+
+The setter supports:
+- Single value updates with a selector
+- Full store replacement when no selector is provided
+- Nested path selectors (e.g., 'user.settings.theme')
 
 ### Rerender Behavior
 

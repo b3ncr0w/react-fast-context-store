@@ -63,7 +63,8 @@ export function useStore<T = any>(
   function setStoreData<Path extends string>(
     value:
       | ((prev: PathValue<T, Path>) => PathValue<T, Path>)
-      | PathValue<T, Path>,
+      | PathValue<T, Path>
+      | T,
     selector?: Path
   ) {
     if (!store) return;
