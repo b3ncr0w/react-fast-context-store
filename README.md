@@ -4,13 +4,13 @@ A lightweight state management solution for React applications using Context API
 
 ## Why React Fast Context Store?
 
-React's Context API has limitations with frequent updates:
-- All consuming components re-render on any context change
+React's Context API combined with `useState` has limitations with frequent updates:
+- When using `useState` within a Context, all consuming components re-render on any state change
 - No granular control over which parts of the state components depend on
-- Performance issues with high-frequency updates
+- Performance issues with high-frequency updates due to unnecessary re-renders
 
 React Fast Context Store solves these by:
-- Selective updates: Components only re-render when their specific dependencies change
+- Selector-based updates: Components only re-render when their specified state selectors change
 - Fine-grained control: Components can specify which parts of the state to observe or ignore
 - Optimized for high-frequency updates: Perfect for real-time applications
 
