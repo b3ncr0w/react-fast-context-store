@@ -218,7 +218,8 @@ The setter supports:
    const data = getData('data', { observedSelectors: [] });
    ```
    - Only renders once when mounted
-   - Never rerenders on store updates
+   - Never rerenders on store updates unless force rerender is triggered
+   - Force rerender (using `setData` with `true` flag and no selector) will still cause rerender
 
 4. **With observedSelectors**:
    ```typescript
