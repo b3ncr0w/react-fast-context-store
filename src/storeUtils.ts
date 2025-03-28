@@ -67,12 +67,20 @@ export function setDataWithSelector(obj: any, value: any, selector?: string) {
 export function checkPattern(pattensArray: string[], str?: string): boolean {
   if (!str) return false;
   for (const pattern of pattensArray) {
-    const regexString = pattern
+    // Check if either pattern matches str or str matches pattern
+    const patternRegex = pattern
       .replace(/\./g, '\\.')
       .replace(/\*{2}/g, '.+')
       .replace(/\*/g, '[^.]+');
-    const regex = new RegExp(`^${regexString}$`);
-    if (regex.test(str)) {
+    const strRegex = str
+      .replace(/\./g, '\\.')
+      .replace(/\*{2}/g, '.+')
+      .replace(/\*/g, '[^.]+');
+    
+    const patternReg = new RegExp(`^${patternRegex}$`);
+    const strReg = new RegExp(`^${strRegex}$`);
+    
+    if (patternReg.test(str) || strReg.test(pattern)) {
       return true;
     }
   }

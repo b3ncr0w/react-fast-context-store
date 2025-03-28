@@ -384,4 +384,123 @@ describe('Store', () => {
       expect(rerenderCount).toBe(1); // Only initial mount
     });
   });
+
+  describe('Force Rerender Tests', () => {
+    it('should force rerender all components when updating whole store', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let rerenderCount1 = 0;
+      let rerenderCount2 = 0;
+      let setData: any;
+
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="data1"
+            settings={{ observedSelectors: ['data1'] }}
+            onMount={(_, set) => { 
+              setData = set;
+              rerenderCount1++;
+            }} 
+          />
+          <TestComponent 
+            selector="data2.data1"
+            settings={{ observedSelectors: ['data2.data1'] }}
+            onMount={(_, set) => { 
+              rerenderCount2++;
+            }} 
+          />
+        </StoreProvider>
+      );
+
+      // Update data1 without forceRerender
+      await act(async () => void setData('new value', 'data1'));
+      expect(rerenderCount1).toBe(2); // Initial mount + update
+      expect(rerenderCount2).toBe(1); // Only initial mount
+
+      // Update whole store with forceRerender
+      await act(async () => void setData((prev: TestStore) => ({
+        ...prev,
+        data1: 'new value 2'
+      }), undefined, true));
+      expect(rerenderCount1).toBe(3); // Another update
+      expect(rerenderCount2).toBe(2); // Forced rerender
+    });
+
+    it('should force rerender all components related to a path', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let parentRerenderCount = 0;
+      let childRerenderCount = 0;
+      let grandchildRerenderCount = 0;
+      let setData: any;
+
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="data3"
+            settings={{ observedSelectors: ['data3.data1'] }}
+            onMount={(_, set) => { 
+              setData = set;
+              parentRerenderCount++;
+            }} 
+          />
+          <TestComponent 
+            selector="data3.data1"
+            settings={{ observedSelectors: ['data3.data1'] }}
+            onMount={(_, set) => { 
+              childRerenderCount++;
+            }} 
+          />
+          <TestComponent 
+            selector="data3.data2.data1"
+            settings={{ observedSelectors: ['data3.data2.data1'] }}
+            onMount={(_, set) => { 
+              grandchildRerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
+
+      // Update data3 with forceRerender
+      await act(async () => void setData((prev: TestStore) => ({
+        ...prev,
+        data3: {
+          data1: 'new1',
+          data2: {
+            data1: 'new2'
+          }
+        }
+      }), 'data3', true));
+
+      // All components should rerender despite observedSelectors
+      expect(parentRerenderCount).toBe(2); // Initial mount + update
+      expect(childRerenderCount).toBe(2); // Initial mount + update
+      expect(grandchildRerenderCount).toBe(2); // Initial mount + update
+    });
+
+    it('should force rerender without changing data', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let rerenderCount = 0;
+      let setData: any;
+
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="data1"
+            settings={{ observedSelectors: ['data1'] }}
+            onMount={(_, set) => { 
+              setData = set;
+              rerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
+
+      // Force rerender without changing data
+      await act(async () => void setData((prev: TestStore) => prev, undefined, true));
+      expect(rerenderCount).toBe(2); // Initial mount + forced rerender
+    });
+  });
 }); 

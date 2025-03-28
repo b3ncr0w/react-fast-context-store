@@ -10,9 +10,14 @@ export function useStoreCore<T>(initData?: T | object) {
     return () => subscribers.current.delete(subscriber as SubscriberType);
   }, []);
 
-  const notify = useCallback((selector?: string) => {
+  const notify = useCallback((selector?: string, forceRerender?: boolean) => {
     subscribers.current.forEach(({ onUpdate, baseSelector, settings }) =>
-      onUpdate({ selector, baseSelector, settings })
+      onUpdate({
+        selector,
+        baseSelector,
+        settings,
+        forceRerender,
+      })
     );
   }, []);
 

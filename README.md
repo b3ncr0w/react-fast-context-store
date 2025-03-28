@@ -156,12 +156,25 @@ setData(newValue, 'path.to.value');
 
 // Update without selector (replaces entire store)
 setData(newStoreState);
+
+// Update whole store and force rerender all components
+setData(newValue, undefined, true);
+
+// Force rerender without changing data
+setData((prev) => prev, undefined, true);
+
+// Force rerender all components related to a specific path
+setData((prev) => ({ ...prev, newData }), 'data2', true);
 ```
 
 The setter supports:
 - Single value updates with a selector
 - Full store replacement when no selector is provided
 - Nested path selectors (e.g., 'user.settings.theme')
+- Force rerender flag to bypass observedSelectors:
+  - When `true`, forces rerender of all components regardless of their selectors or settings
+  - When updating a specific path, forces rerender of all components using that path or its children
+  - Useful for manual control over component updates or when you need to ensure all components reflect the latest state
 
 ### Rerender Behavior
 

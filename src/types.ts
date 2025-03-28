@@ -7,6 +7,7 @@ export type UpdatePropsType = {
   selector?: string;
   baseSelector?: string;
   settings?: SettingsType;
+  forceRerender?: boolean;
 };
 
 export type SubscriberType = {

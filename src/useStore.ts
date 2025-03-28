@@ -25,23 +25,35 @@ export function useStore<T = any>(
       selector,
       baseSelector,
       settings,
+      forceRerender,
     }: UpdatePropsType) => {
-      const relatedSelectorParts = selector?.split('.').slice(0, -1);
+      if (forceRerender && selector === undefined) {
+        rerender();
+        return;
+      }
+
+      const selectorParts = selector?.split('.').slice(0, -1);
       const parentSelectors =
-        relatedSelectorParts?.map((_, index) =>
-          relatedSelectorParts.slice(0, index + 1).join('.')
+        selectorParts?.map((_, index) =>
+          selectorParts.slice(0, index + 1).join('.')
         ) || [];
 
       if (
         selector !== undefined &&
         baseSelector !== undefined &&
-        checkPattern([...parentSelectors, selector + '.**', selector], baseSelector) === false
+        checkPattern(
+          [...parentSelectors, selector + '.**', selector],
+          baseSelector
+        ) === false
       )
         return;
 
       if (
         settings?.observedSelectors !== undefined &&
-        checkPattern(settings.observedSelectors, selector) === false
+        checkPattern(
+          settings.observedSelectors,
+          forceRerender ? selector + '.**' : selector
+        ) === false
       )
         return;
       if (
@@ -66,7 +78,8 @@ export function useStore<T = any>(
       | ((prev: PathValue<T, Path>) => PathValue<T, Path>)
       | PathValue<T, Path>
       | T,
-    selector?: Path
+    selector?: Path,
+    forceRerender?: boolean
   ) {
     if (!store) return;
 
@@ -74,7 +87,7 @@ export function useStore<T = any>(
     const newSnapshot = setDataWithSelector(snapshot, value, selector);
 
     store.set(newSnapshot);
-    store.notify(selector);
+    store.notify(selector, forceRerender);
   }
 
   return [getStoreData, setStoreData] as const;
