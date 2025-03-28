@@ -1,16 +1,16 @@
-import { useCallback, useRef } from 'react';
+import { useRef } from 'react';
 import { SubscriberType } from './types';
 
 export function useStoreCore<T>(initData?: T | object) {
   const store = useRef<T | object>(initData || {});
   const subscribers = useRef(new Set<SubscriberType>());
 
-  const subscribe = useCallback((subscriber: SubscriberType) => {
+  const subscribe = (subscriber: SubscriberType) => {
     subscribers.current.add(subscriber as SubscriberType);
     return () => subscribers.current.delete(subscriber as SubscriberType);
-  }, []);
+  };
 
-  const notify = useCallback((selector?: string, forceRerender?: boolean) => {
+  const notify = (selector?: string, forceRerender?: boolean) => {
     subscribers.current.forEach(({ onUpdate, baseSelector, settings }) =>
       onUpdate({
         selector,
@@ -19,13 +19,13 @@ export function useStoreCore<T>(initData?: T | object) {
         forceRerender,
       })
     );
-  }, []);
+  };
 
-  const get = useCallback(() => store.current, []);
+  const get = () => store.current;
 
-  const set = useCallback((value: T | object) => {
+  const set = (value: T | object) => {
     store.current = value;
-  }, []);
+  };
 
   return {
     subscribe,
