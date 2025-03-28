@@ -27,14 +27,15 @@ export function useStore<T = any>(
       settings,
     }: UpdatePropsType) => {
       const relatedSelectorParts = selector?.split('.').slice(0, -1);
-      const relatedSelectors =
+      const parentSelectors =
         relatedSelectorParts?.map((_, index) =>
           relatedSelectorParts.slice(0, index + 1).join('.')
         ) || [];
 
       if (
+        selector !== undefined &&
         baseSelector !== undefined &&
-        [...relatedSelectors, selector].includes(baseSelector) === false
+        checkPattern([...parentSelectors, selector + '.**', selector], baseSelector) === false
       )
         return;
 

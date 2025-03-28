@@ -121,6 +121,81 @@ describe('Store', () => {
       await act(async () => void setData('new value', 'data3.data2.data1'));
       expect(rerenderCount).toBe(2); // Initial mount + update
     });
+
+    it('should rerender child components when parent object changes', async () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const TestComponent = createTestComponent(useStore);
+      let parentRerenderCount = 0;
+      let childRerenderCount = 0;
+      let grandchildRerenderCount = 0;
+      let setData: any;
+
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="data3"
+            onMount={(_, set) => { 
+              setData = set;
+              parentRerenderCount++;
+            }} 
+          />
+          <TestComponent 
+            selector="data3.data1"
+            onMount={(_, set) => { 
+              childRerenderCount++;
+            }} 
+          />
+          <TestComponent 
+            selector="data3.data2.data1"
+            onMount={(_, set) => { 
+              grandchildRerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
+
+      // Update the entire data3 object
+      await act(async () => void setData((prev: TestStore) => ({
+        ...prev,
+        data3: {
+          data1: 'new1',
+          data2: {
+            data1: 'new2'
+          }
+        }
+      }), 'data3'));
+
+      expect(parentRerenderCount).toBe(2); // Initial mount + update
+      expect(childRerenderCount).toBe(2); // Initial mount + update
+      expect(grandchildRerenderCount).toBe(2); // Initial mount + update
+
+      // Test with observedSelectors
+      let observedRerenderCount = 0;
+      render(
+        <StoreProvider>
+          <TestComponent 
+            selector="data3.data1"
+            settings={{ observedSelectors: ['data3.data1'] }}
+            onMount={(_, set) => { 
+              observedRerenderCount++;
+            }} 
+          />
+        </StoreProvider>
+      );
+
+      // Update the entire data3 object again
+      await act(async () => void setData((prev: TestStore) => ({
+        ...prev,
+        data3: {
+          data1: 'new3',
+          data2: {
+            data1: 'new4'
+          }
+        }
+      }), 'data3'));
+
+      expect(observedRerenderCount).toBe(1); // Only initial mount, no rerender due to observedSelectors
+    });
   });
 
   describe('Observed Selectors Tests', () => {

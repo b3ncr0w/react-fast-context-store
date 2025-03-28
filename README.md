@@ -182,6 +182,23 @@ The setter supports:
      - Components with selector `data3.data2.data1`
      - Components with selector `data3.data2`
      - Components with selector `data3`
+   - When updating an entire object, all child components will rerender:
+     ```typescript
+     // This will trigger rerender for all components using:
+     // - data3
+     // - data3.data1
+     // - data3.data2
+     // - data3.data2.data1
+     setData((prev) => ({
+       ...prev,
+       data3: {
+         data1: 'new1',
+         data2: {
+           data1: 'new2'
+         }
+       }
+     }), 'data3');
+     ```
 
 3. **With Empty observedSelectors**:
    ```typescript

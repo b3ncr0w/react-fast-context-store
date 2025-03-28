@@ -81,33 +81,69 @@ const App = () => {
             onChange={(e) => setData(e.target.value, 'data3.data2.data1')}
           />
         </Component>
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px' }}>
         <button
           onClick={() => {
-            setData(String(Math.random()), 'data1');
+            const hash = Number(Math.random() * 10000).toFixed(0);
+            setData('data1' + `(${hash})`, 'data1');
             setData((prev) => [...prev, 'el' + (prev.length + 1)], 'array1');
           }}
         >
-          Change multiple data at once<br />
+          Change multiple data at once
+          <br />
           (data1 and array1)
         </button>
         <button
           onClick={() => {
+            const hash = Number(Math.random() * 10000).toFixed(0);
             setData({
-              array1: ["el1-replaced", "el2-replaced", "el3-replaced"],
-              data1: "data1-replaced",
+              array1: ['el1' + `(${hash})`, 'el2' + `(${hash})`, 'el3' + `(${hash})`],
+              data1: 'data1' + `(${hash})`,
               data2: {
-                data1: "data2-1-replaced",
+                data1: 'data2-1' + `(${hash})`,
               },
               data3: {
-                data1: "data3-1-replaced",
+                data1: 'data3-1' + `(${hash})`,
                 data2: {
-                  data1: "data3-2-1-replaced",
+                  data1: 'data3-2-1' + `(${hash})`,
                 },
               },
             });
           }}
         >
-          Replace whole store
+          Change whole store
+        </button>
+        <button
+          onClick={() => {
+            const hash = Number(Math.random() * 10000).toFixed(0);
+            setData({
+              array1: ['el1' + `(${hash})`, 'el2' + `(${hash})`, 'el3' + `(${hash})`],
+              data1: 'data1' + `(${hash})`,
+              data2: {
+                data1: 'data2-1' + `(${hash})`,
+              },
+              data3: {
+                data1: 'data3-1' + `(${hash})`,
+                data2: {
+                  data1: 'data3-2-1' + `(${hash})`,
+                },
+              },
+            });
+          }}
+        >
+          Change whole store and force rerender
+        </button>
+        <button
+          onClick={() => {
+            const hash = Number(Math.random() * 10000).toFixed(0);
+            setData({
+              data1: 'data2-1' + `(${hash})`,
+            }, 'data2');
+          }}
+        >
+          Change data2 object
         </button>
       </div>
     </div>
