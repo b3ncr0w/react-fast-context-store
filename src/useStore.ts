@@ -14,11 +14,11 @@ export function useStore<T = any>(
   const store = useContext(StoreContext);
   const rerender = useRerender();
 
-  function getStoreData<Path extends string>(
+  function getStoreData<Path extends string | undefined = undefined>(
     selector?: Path,
     settings?: SettingsType
-  ) {
-    if (!store) return null;
+  ): Path extends string ? PathValue<T, Path> : Path extends undefined ? T : any {
+    if (!store) return undefined as any;
 
     // Subscribe to changes
     const onUpdate = ({

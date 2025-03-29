@@ -50,34 +50,34 @@ const App = () => {
         <Component selector='data1'>
           <input
             type='text'
-            defaultValue={getData('data1', { observedSelectors: [] })}
+            defaultValue={String(getData('data1', { observedSelectors: [] }))}
             onChange={(e) => setData(e.target.value, 'data1')}
           />
         </Component>
         <Component selector='data2.data1'>
           <input
             type='text'
-            defaultValue={getData('data2.data1', {
+            defaultValue={String(getData('data2.data1', {
               observedSelectors: [],
-            })}
+            }))}
             onChange={(e) => setData(e.target.value, 'data2.data1')}
           />
         </Component>
         <Component selector='data3.data1'>
           <input
             type='text'
-            defaultValue={getData('data3.data1', {
+            defaultValue={String(getData('data3.data1', {
               observedSelectors: [],
-            })}
+            }))}
             onChange={(e) => setData(e.target.value, 'data3.data1')}
           />
         </Component>
         <Component selector='data3.data2.data1'>
           <input
             type='text'
-            defaultValue={getData('data3.data2.data1', {
+            defaultValue={String(getData('data3.data2.data1', {
               observedSelectors: [],
-            })}
+            }))}
             onChange={(e) => setData(e.target.value, 'data3.data2.data1')}
           />
         </Component>

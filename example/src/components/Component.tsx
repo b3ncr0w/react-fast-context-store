@@ -12,6 +12,7 @@ export const Component = ({
   children?: React.ReactNode;
 }) => {
   const [getData] = useFastStore();
+  const data = getData(selector, settings);
   const divRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export const Component = ({
       {settings?.observedSelectors && <span style={{ color: "lightblue" }}>observedSelectors: {JSON.stringify(settings?.observedSelectors)}</span>}
       {settings?.ignoredSelectors && <span style={{ color: "orange" }}>ignoredSelectors: {JSON.stringify(settings?.ignoredSelectors)}</span>}
       {children}
-      <pre>{JSON.stringify(getData(selector, settings), null, 4)}</pre>
+      <pre>{JSON.stringify(data, null, 4)}</pre>
     </div>
   );
 };
