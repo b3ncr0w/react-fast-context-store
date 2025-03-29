@@ -1,13 +1,13 @@
 import { useRef } from 'react';
-import { SubscriberType } from './types';
+import { Subscriber } from './types';
 
 export function useStoreCore<T>(initData?: T | object) {
   const store = useRef<T | object>(initData || {});
-  const subscribers = useRef(new Set<SubscriberType>());
+  const subscribers = useRef(new Set<Subscriber>());
 
-  const subscribe = (subscriber: SubscriberType) => {
-    subscribers.current.add(subscriber as SubscriberType);
-    return () => subscribers.current.delete(subscriber as SubscriberType);
+  const subscribe = (subscriber: Subscriber) => {
+    subscribers.current.add(subscriber as Subscriber);
+    return () => subscribers.current.delete(subscriber as Subscriber);
   };
 
   const notify = (selector?: string, forceRerender?: boolean) => {

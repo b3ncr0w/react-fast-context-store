@@ -189,6 +189,20 @@ const App = () => {
         >
           Change data3 object and force rerender
         </button>
+        <button
+          onClick={() => {
+            setData((prev) => prev, undefined, true);
+          }}
+        >
+          Rerender without changing anything
+        </button>
+        <button
+          onClick={() => {
+            setData('static', 'data1');
+          }}
+        >
+          Set static value (data1)
+        </button>
       </div>
     </div>
   );

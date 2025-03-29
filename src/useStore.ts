@@ -1,9 +1,10 @@
-import { useContext, useCallback } from 'react';
-import { PathValue, SettingsType, UpdatePropsType } from './types';
+import { useContext, useCallback, useRef } from 'react';
+import { UpdateProps, GetStoreData, SetStoreData } from './types';
 import { useStoreCore } from './useStoreCore';
 import {
   checkPattern,
   getDataWithSelector,
+  isEqual,
   setDataWithSelector,
   useRerender,
 } from './storeUtils';
@@ -13,82 +14,88 @@ export function useStore<T = any>(
 ) {
   const store = useContext(StoreContext);
   const rerender = useRerender();
+  const previousValueRef = useRef<any>(null);
 
-  const getStoreData = useCallback(<Path extends string | undefined = undefined>(
-    selector?: Path,
-    settings?: SettingsType
-  ): Path extends string ? PathValue<T, Path> : Path extends undefined ? T : any => {
-    if (!store) return undefined as any;
+  const getStoreData: GetStoreData<T> = useCallback(
+    (selector, settings) => {
+      if (!store) return undefined as any;
 
-    // Subscribe to changes
-    const onUpdate = ({
-      selector,
-      baseSelector,
-      settings,
-      forceRerender,
-    }: UpdatePropsType) => {
-      if (forceRerender && selector === undefined) {
+      // Subscribe to changes
+      const onUpdate = ({
+        selector,
+        baseSelector,
+        settings,
+        forceRerender,
+      }: UpdateProps) => {
+        if (forceRerender && selector === undefined) {
+          rerender();
+          return;
+        }
+
+        const currentValue = getDataWithSelector(store.get(), baseSelector);
+        const dataChanged = !isEqual(currentValue, previousValueRef.current);
+
+        if (dataChanged === false) return;
+
+        const selectorParts = selector?.split('.').slice(0, -1);
+        const parentSelectors =
+          selectorParts?.map((_, index) =>
+            selectorParts.slice(0, index + 1).join('.')
+          ) || [];
+
+        if (
+          selector !== undefined &&
+          baseSelector !== undefined &&
+          checkPattern(
+            [...parentSelectors, selector + '.**', selector],
+            baseSelector
+          ) === false
+        )
+          return;
+
+        if (
+          settings?.observedSelectors !== undefined &&
+          checkPattern(
+            settings.observedSelectors,
+            forceRerender ? selector + '.**' : selector
+          ) === false
+        )
+          return;
+        if (
+          settings?.ignoredSelectors !== undefined &&
+          checkPattern(settings.ignoredSelectors, selector) === true
+        )
+          return;
+
         rerender();
-        return;
-      }
+        previousValueRef.current = currentValue;
+      };
+      store.subscribe({ onUpdate, baseSelector: selector, settings });
 
-      const selectorParts = selector?.split('.').slice(0, -1);
-      const parentSelectors =
-        selectorParts?.map((_, index) =>
-          selectorParts.slice(0, index + 1).join('.')
-        ) || [];
+      // Get data
+      const snapshot = store.get();
+      const data = getDataWithSelector(snapshot, selector);
 
-      if (
-        selector !== undefined &&
-        baseSelector !== undefined &&
-        checkPattern(
-          [...parentSelectors, selector + '.**', selector],
-          baseSelector
-        ) === false
-      )
-        return;
+      // Initialize previous value
+      previousValueRef.current = data;
 
-      if (
-        settings?.observedSelectors !== undefined &&
-        checkPattern(
-          settings.observedSelectors,
-          forceRerender ? selector + '.**' : selector
-        ) === false
-      )
-        return;
-      if (
-        settings?.ignoredSelectors !== undefined &&
-        checkPattern(settings.ignoredSelectors, selector) === true
-      )
-        return;
+      return data;
+    },
+    [store, rerender]
+  );
 
-      rerender();
-    };
-    store.subscribe({ onUpdate, baseSelector: selector, settings });
+  const setStoreData: SetStoreData<T> = useCallback(
+    (value, selector, forceRerender) => {
+      if (!store) return;
 
-    // Get data
-    const snapshot = store.get();
-    const data = getDataWithSelector(snapshot, selector);
+      const snapshot = store.get();
+      const newSnapshot = setDataWithSelector(snapshot, value, selector);
 
-    return data;
-  }, [store, rerender]);
-
-  const setStoreData = useCallback(<Path extends string>(
-    value:
-      | ((prev: PathValue<T, Path>) => PathValue<T, Path>)
-      | PathValue<T, Path>
-      | T,
-    selector?: Path,
-    forceRerender?: boolean
-  ) => {
-    if (!store) return;
-
-    const snapshot = store.get();
-    const newSnapshot = setDataWithSelector(snapshot, value, selector);
-
-    store.set(newSnapshot);
-    store.notify(selector, forceRerender);
-  }, [store]);
+      store.set(newSnapshot);
+      store.notify(selector, forceRerender);
+    },
+    [store]
+  );
 
   return [getStoreData, setStoreData] as const;
 }

@@ -86,3 +86,22 @@ export function checkPattern(pattensArray: string[], str?: string): boolean {
   }
   return false;
 }
+
+export function isEqual(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+  
+  // Handle arrays explicitly
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    return a.every((item, index) => isEqual(item, b[index]));
+  }
+  
+  // Handle objects
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  
+  return keysA.every(key => isEqual(a[key], b[key]));
+}

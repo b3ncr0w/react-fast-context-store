@@ -1,20 +1,20 @@
-export type SettingsType = {
+export interface Settings {
   observedSelectors?: string[];
   ignoredSelectors?: string[];
-};
+}
 
-export type UpdatePropsType = {
+export interface UpdateProps {
   selector?: string;
   baseSelector?: string;
-  settings?: SettingsType;
+  settings?: Settings;
   forceRerender?: boolean;
-};
+}
 
-export type SubscriberType = {
-  onUpdate: (props: UpdatePropsType) => void;
+export interface Subscriber {
+  onUpdate: (props: UpdateProps) => void;
   baseSelector?: string;
-  settings?: SettingsType;
-};
+  settings?: Settings;
+}
 
 export type PathValue<T, Path extends string> = Path extends keyof T
   ? T[Path]
@@ -23,3 +23,16 @@ export type PathValue<T, Path extends string> = Path extends keyof T
     ? PathValue<T[K], R>
     : any
   : any;
+
+export type GetStoreData<T> = <Path extends string | undefined = undefined>(
+  selector?: Path,
+  settings?: Settings
+) => Path extends string ? PathValue<T, Path> : Path extends undefined ? T : any;
+
+export type SetStoreData<T> = <Path extends string | undefined = undefined>(
+  value: ((prev: Path extends string ? PathValue<T, Path> : T) => Path extends string ? PathValue<T, Path> : T) | (Path extends string ? PathValue<T, Path> : T),
+  selector?: Path,
+  forceRerender?: boolean
+) => void;
+
+export type UseStore<T> = () => readonly [GetStoreData<T>, SetStoreData<T>];
