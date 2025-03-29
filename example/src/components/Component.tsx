@@ -1,4 +1,4 @@
-import { SettingsType } from "react-fast-context-store";
+import { Settings } from "react-fast-context-store";
 import { useFastStore } from "../store";
 import { useEffect, useRef } from "react";
 
@@ -8,7 +8,7 @@ export const Component = ({
   children,
 }: {
   selector?: string;
-  settings?: SettingsType;
+  settings?: Settings;
   children?: React.ReactNode;
 }) => {
   const [getData] = useFastStore();
