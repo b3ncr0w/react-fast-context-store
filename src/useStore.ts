@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useCallback } from 'react';
 import { PathValue, SettingsType, UpdatePropsType } from './types';
 import { useStoreCore } from './useStoreCore';
 import {
@@ -14,10 +14,10 @@ export function useStore<T = any>(
   const store = useContext(StoreContext);
   const rerender = useRerender();
 
-  function getStoreData<Path extends string | undefined = undefined>(
+  const getStoreData = useCallback(<Path extends string | undefined = undefined>(
     selector?: Path,
     settings?: SettingsType
-  ): Path extends string ? PathValue<T, Path> : Path extends undefined ? T : any {
+  ): Path extends string ? PathValue<T, Path> : Path extends undefined ? T : any => {
     if (!store) return undefined as any;
 
     // Subscribe to changes
@@ -71,16 +71,16 @@ export function useStore<T = any>(
     const data = getDataWithSelector(snapshot, selector);
 
     return data;
-  }
+  }, [store, rerender]);
 
-  function setStoreData<Path extends string>(
+  const setStoreData = useCallback(<Path extends string>(
     value:
       | ((prev: PathValue<T, Path>) => PathValue<T, Path>)
       | PathValue<T, Path>
       | T,
     selector?: Path,
     forceRerender?: boolean
-  ) {
+  ) => {
     if (!store) return;
 
     const snapshot = store.get();
@@ -88,7 +88,7 @@ export function useStore<T = any>(
 
     store.set(newSnapshot);
     store.notify(selector, forceRerender);
-  }
+  }, [store]);
 
   return [getStoreData, setStoreData] as const;
 }
