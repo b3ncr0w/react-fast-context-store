@@ -92,8 +92,8 @@ export function isEqual(a: any, b: any, visited = new WeakMap()): boolean {
   if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
   
   // Handle circular references
-  if (visited.has(a) && visited.has(b)) {
-    return visited.get(a) === visited.get(b);
+  if (visited.has(a)) {
+    return visited.get(a) === b;
   }
   
   // Handle arrays explicitly
@@ -101,7 +101,10 @@ export function isEqual(a: any, b: any, visited = new WeakMap()): boolean {
     if (!Array.isArray(a) || !Array.isArray(b)) return false;
     if (a.length !== b.length) return false;
     visited.set(a, b);
-    return a.every((item, index) => isEqual(item, b[index], visited));
+    for (let i = 0; i < a.length; i++) {
+      if (!isEqual(a[i], b[i], visited)) return false;
+    }
+    return true;
   }
   
   // Handle objects
@@ -110,5 +113,8 @@ export function isEqual(a: any, b: any, visited = new WeakMap()): boolean {
   if (keysA.length !== keysB.length) return false;
   
   visited.set(a, b);
-  return keysA.every(key => isEqual(a[key], b[key], visited));
+  for (const key of keysA) {
+    if (!isEqual(a[key], b[key], visited)) return false;
+  }
+  return true;
 }
