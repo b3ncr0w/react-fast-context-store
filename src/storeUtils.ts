@@ -87,15 +87,21 @@ export function checkPattern(pattensArray: string[], str?: string): boolean {
   return false;
 }
 
-export function isEqual(a: any, b: any): boolean {
+export function isEqual(a: any, b: any, visited = new WeakMap()): boolean {
   if (a === b) return true;
   if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+  
+  // Handle circular references
+  if (visited.has(a) && visited.has(b)) {
+    return visited.get(a) === visited.get(b);
+  }
   
   // Handle arrays explicitly
   if (Array.isArray(a) || Array.isArray(b)) {
     if (!Array.isArray(a) || !Array.isArray(b)) return false;
     if (a.length !== b.length) return false;
-    return a.every((item, index) => isEqual(item, b[index]));
+    visited.set(a, b);
+    return a.every((item, index) => isEqual(item, b[index], visited));
   }
   
   // Handle objects
@@ -103,5 +109,6 @@ export function isEqual(a: any, b: any): boolean {
   const keysB = Object.keys(b);
   if (keysA.length !== keysB.length) return false;
   
-  return keysA.every(key => isEqual(a[key], b[key]));
+  visited.set(a, b);
+  return keysA.every(key => isEqual(a[key], b[key], visited));
 }
