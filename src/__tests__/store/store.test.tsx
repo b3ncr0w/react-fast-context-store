@@ -181,4 +181,83 @@ describe('Store', () => {
   //   it('should force rerender all components related to a path', () => {});
   //   it('should force rerender without changing data', () => {});
   // });
+
+  describe('Immutability Tests', () => {
+    it('should maintain immutability of stored objects', () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const rerendersCount: number[] = [];
+      
+      // Create a component that will access the store
+      const TestComponent = () => {
+        const [getData, setData] = useStore();
+        
+        // Store the external object in the store
+        React.useEffect(() => {
+          // Create an object outside the store
+          const externalObject = { data1: 'external' };
+          
+          // Store the external object in the store
+          setData(externalObject, 'data2');
+          
+          // Verify the store has the correct value
+          expect(getData('data2')).toEqual({ data1: 'external' });
+          
+          // Modify the external object
+          externalObject.data1 = 'modified';
+          
+          // Verify the store value remains unchanged
+          expect(getData('data2')).toEqual({ data1: 'external' });
+          
+          // Test with immutable flag set to false
+          setData(externalObject, 'data2', { immutable: false });
+          
+          // Verify the store has the correct value
+          expect(getData('data2')).toEqual({ data1: 'modified' });
+          
+          // Modify the external object again
+          externalObject.data1 = 'modified again';
+          
+          // Verify the store value changes when immutable is false
+          expect(getData('data2')).toEqual({ data1: 'modified again' });
+          
+          // Test with array immutability
+          const externalArray = ['a', 'b', 'c'];
+          
+          // Store the external array in the store
+          setData(externalArray, 'array1');
+          
+          // Verify the store has the correct value
+          expect(getData('array1')).toEqual(['a', 'b', 'c']);
+          
+          // Modify the external array
+          externalArray.push('d');
+          
+          // Verify the store value remains unchanged
+          expect(getData('array1')).toEqual(['a', 'b', 'c']);
+          
+          // Test with immutable flag set to false
+          setData(externalArray, 'array1', { immutable: false });
+          
+          // Verify the store has the correct value
+          expect(getData('array1')).toEqual(['a', 'b', 'c', 'd']);
+          
+          // Modify the external array again
+          externalArray.push('e');
+          
+          // Verify the store value changes when immutable is false
+          expect(getData('array1')).toEqual(['a', 'b', 'c', 'd', 'e']);
+        }, []);
+
+        return null;
+      };
+
+      act(() => {
+        render(
+          <StoreProvider>
+            <TestComponent />
+          </StoreProvider>
+        );
+      });
+    });
+  });
 });
