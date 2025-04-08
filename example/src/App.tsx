@@ -155,9 +155,7 @@ const App = () => {
                     data1: 'data3-2-1' + `(${hash})`,
                   },
                 },
-              }),
-              undefined,
-              { forceRerender: true }
+              })
             );
           }}
         >
