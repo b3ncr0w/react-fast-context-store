@@ -28,22 +28,28 @@ export function useStore<T = any>(
         settings,
         forceRerender,
       }: UpdateProps) => {
+        // Handle global force rerender case (when selector is undefined)
         if (forceRerender && selector === undefined) {
           rerender();
           return;
         }
 
+        // Check if the data has actually changed by comparing current and previous values
         const currentValue = getDataWithSelector(store.get(), baseSelector);
         const dataChanged = !isEqual(currentValue, previousValueRef.current);
 
+        // Skip update if data hasn't changed
+        if (dataChanged === false && !forceRerender) return;
+
+        // Extract parent selectors for pattern matching
         const selectorParts = selector?.split('.').slice(0, -1);
         const parentSelectors =
           selectorParts?.map((_, index) =>
             selectorParts.slice(0, index + 1).join('.')
           ) || [];
 
-        if (dataChanged === false) return;
-
+        // Check if the update matches the selector pattern
+        // This ensures we only rerender when relevant data changes
         if (
           selector !== undefined &&
           baseSelector !== undefined &&
@@ -54,6 +60,8 @@ export function useStore<T = any>(
         )
           return;
 
+        // Check if the update matches the observed selectors pattern
+        // This allows for selective observation of specific parts of the store
         if (
           settings?.observedSelectors !== undefined &&
           checkPattern(
@@ -62,12 +70,16 @@ export function useStore<T = any>(
           ) === false
         )
           return;
+        
+        // Check if the update should be ignored based on ignored selectors
+        // This allows for excluding specific parts of the store from updates
         if (
           settings?.ignoredSelectors !== undefined &&
           checkPattern(settings.ignoredSelectors, selector) === true
         )
           return;
 
+        // If all checks pass, trigger a rerender and update the previous value reference
         rerender();
         previousValueRef.current = deepClone(currentValue);
       };
