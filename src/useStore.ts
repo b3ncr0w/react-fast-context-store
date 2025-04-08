@@ -3,6 +3,7 @@ import { UpdateProps, GetStoreData, SetStoreData } from './types';
 import { useStoreCore } from './useStoreCore';
 import {
   checkPattern,
+  deepClone,
   getDataWithSelector,
   isEqual,
   setDataWithSelector,
@@ -35,13 +36,13 @@ export function useStore<T = any>(
         const currentValue = getDataWithSelector(store.get(), baseSelector);
         const dataChanged = !isEqual(currentValue, previousValueRef.current);
 
-        if (dataChanged === false) return;
-
         const selectorParts = selector?.split('.').slice(0, -1);
         const parentSelectors =
           selectorParts?.map((_, index) =>
             selectorParts.slice(0, index + 1).join('.')
           ) || [];
+
+        if (dataChanged === false) return;
 
         if (
           selector !== undefined &&
@@ -68,7 +69,7 @@ export function useStore<T = any>(
           return;
 
         rerender();
-        previousValueRef.current = currentValue;
+        previousValueRef.current = deepClone(currentValue);
       };
       store.subscribe({ onUpdate, baseSelector: selector, settings });
 
@@ -77,7 +78,7 @@ export function useStore<T = any>(
       const data = getDataWithSelector(snapshot, selector);
 
       // Initialize previous value
-      previousValueRef.current = data;
+      previousValueRef.current = deepClone(data);
 
       return data;
     },
@@ -85,14 +86,20 @@ export function useStore<T = any>(
   );
 
   const setStoreData: SetStoreData<T> = useCallback(
-    (value, selector, forceRerender) => {
+    (value, selector, settings) => {
       if (!store) return;
 
       const snapshot = store.get();
-      const newSnapshot = setDataWithSelector(snapshot, value, selector);
+      const newSnapshot = setDataWithSelector(
+        snapshot,
+        settings?.immutable === false || settings?.forceRerender === true
+          ? value
+          : deepClone(value),
+        selector
+      );
 
       store.set(newSnapshot);
-      store.notify(selector, forceRerender);
+      store.notify(selector, settings?.forceRerender);
     },
     [store]
   );

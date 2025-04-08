@@ -12,6 +12,9 @@ export type FastStoreDataType = {
       data1: string;
     };
   };
+  immutableData: {
+    count: number;
+  };
 };
 
 export const [FastStoreProvider, useFastStore] = createStore<FastStoreDataType>({
@@ -25,5 +28,8 @@ export const [FastStoreProvider, useFastStore] = createStore<FastStoreDataType>(
     data2: {
       data1: "data3-2-1",
     },
+  },
+  immutableData: {
+    count: 0,
   },
 });

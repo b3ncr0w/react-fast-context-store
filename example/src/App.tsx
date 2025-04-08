@@ -1,6 +1,8 @@
 import { Component } from './components/Component';
 import { useFastStore } from './store';
 
+const immutabilityExampleObject = { count: 0 };
+
 const App = () => {
   const [getData, setData] = useFastStore();
 
@@ -57,29 +59,66 @@ const App = () => {
         <Component selector='data2.data1'>
           <input
             type='text'
-            defaultValue={String(getData('data2.data1', {
-              observedSelectors: [],
-            }))}
+            defaultValue={String(
+              getData('data2.data1', {
+                observedSelectors: [],
+              })
+            )}
             onChange={(e) => setData(e.target.value, 'data2.data1')}
           />
         </Component>
         <Component selector='data3.data1'>
           <input
             type='text'
-            defaultValue={String(getData('data3.data1', {
-              observedSelectors: [],
-            }))}
+            defaultValue={String(
+              getData('data3.data1', {
+                observedSelectors: [],
+              })
+            )}
             onChange={(e) => setData(e.target.value, 'data3.data1')}
           />
         </Component>
         <Component selector='data3.data2.data1'>
           <input
             type='text'
-            defaultValue={String(getData('data3.data2.data1', {
-              observedSelectors: [],
-            }))}
+            defaultValue={String(
+              getData('data3.data2.data1', {
+                observedSelectors: [],
+              })
+            )}
             onChange={(e) => setData(e.target.value, 'data3.data2.data1')}
           />
+        </Component>
+      </div>
+
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <Component selector='immutableData'>
+          <span>Value outside of store:</span>
+          <pre>{JSON.stringify(immutabilityExampleObject, null, 4)}</pre>
+          <button
+            onClick={() => {
+              immutabilityExampleObject.count += 1;
+              setData((prev) => prev, undefined, { forceRerender: true });
+            }}
+          >
+            Modify Object outside of store
+          </button>
+          <button
+            onClick={() => {
+              setData(immutabilityExampleObject, 'immutableData', {
+                immutable: false,
+              });
+            }}
+          >
+            Save as Mutable
+          </button>
+          <button
+            onClick={() => {
+              setData(immutabilityExampleObject, 'immutableData');
+            }}
+          >
+            Save as Immutable
+          </button>
         </Component>
       </div>
 
@@ -98,32 +137,9 @@ const App = () => {
         <button
           onClick={() => {
             const hash = Number(Math.random() * 10000).toFixed(0);
-            setData({
-              array1: [
-                'el1' + `(${hash})`,
-                'el2' + `(${hash})`,
-                'el3' + `(${hash})`,
-              ],
-              data1: 'data1' + `(${hash})`,
-              data2: {
-                data1: 'data2-1' + `(${hash})`,
-              },
-              data3: {
-                data1: 'data3-1' + `(${hash})`,
-                data2: {
-                  data1: 'data3-2-1' + `(${hash})`,
-                },
-              },
-            });
-          }}
-        >
-          Change whole store
-        </button>
-        <button
-          onClick={() => {
-            const hash = Number(Math.random() * 10000).toFixed(0);
             setData(
-              {
+              (prev) => ({
+                ...prev,
                 array1: [
                   'el1' + `(${hash})`,
                   'el2' + `(${hash})`,
@@ -139,9 +155,38 @@ const App = () => {
                     data1: 'data3-2-1' + `(${hash})`,
                   },
                 },
-              },
+              }),
               undefined,
-              true
+              { forceRerender: true }
+            );
+          }}
+        >
+          Change whole store
+        </button>
+        <button
+          onClick={() => {
+            const hash = Number(Math.random() * 10000).toFixed(0);
+            setData(
+              (prev) => ({
+                ...prev,
+                array1: [
+                  'el1' + `(${hash})`,
+                  'el2' + `(${hash})`,
+                  'el3' + `(${hash})`,
+                ],
+                data1: 'data1' + `(${hash})`,
+                data2: {
+                  data1: 'data2-1' + `(${hash})`,
+                },
+                data3: {
+                  data1: 'data3-1' + `(${hash})`,
+                  data2: {
+                    data1: 'data3-2-1' + `(${hash})`,
+                  },
+                }
+              }),
+              undefined,
+              { forceRerender: true }
             );
           }}
         >
@@ -151,9 +196,10 @@ const App = () => {
           onClick={() => {
             const hash = Number(Math.random() * 10000).toFixed(0);
             setData(
-              {
+              (prev) => ({
+                ...prev,
                 data1: 'data2-1' + `(${hash})`,
-              },
+              }),
               'data2'
             );
           }}
@@ -183,7 +229,7 @@ const App = () => {
                 data1: 'data3-1' + `(${hash})`,
               }),
               'data3',
-              true
+              { forceRerender: true }
             );
           }}
         >
@@ -191,7 +237,7 @@ const App = () => {
         </button>
         <button
           onClick={() => {
-            setData((prev) => prev, undefined, true);
+            setData((prev) => prev, undefined, { forceRerender: true });
           }}
         >
           Rerender without changing anything

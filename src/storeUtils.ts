@@ -5,7 +5,7 @@ export const useRerender = () => {
   return () => setTick((tick) => tick + 1);
 };
 
-function deepClone<T>(obj: T, visited = new WeakMap()): T {
+export function deepClone<T>(obj: T, visited = new WeakMap()): T {
   if (obj === null || typeof obj !== 'object') {
     return obj;
   }
@@ -50,15 +50,14 @@ export function setDataWithSelector(obj: any, value: any, selector?: string) {
   const keys = selector.split('.');
   const lastKey = keys.pop()!;
 
-  const newObj = deepClone(obj);
-  const target = keys.reduce((acc, key) => acc?.[key], newObj);
+  const target = keys.reduce((acc, key) => acc?.[key], obj);
 
   if (target) {
     target[lastKey] =
       typeof value === 'function' ? value(target[lastKey]) : value;
   }
 
-  return newObj;
+  return obj;
 }
 
 // . is word limiter
@@ -88,15 +87,26 @@ export function checkPattern(pattensArray: string[], str?: string): boolean {
 }
 
 export function isEqual(a: any, b: any, visited = new WeakMap()): boolean {
+  // Handle primitive types and null/undefined
   if (a === b) return true;
-  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+  if (a === null || b === null || a === undefined || b === undefined) return false;
+  
+  // Handle primitive types (strings, numbers, booleans)
+  if (typeof a !== 'object' || typeof b !== 'object') {
+    return a === b;
+  }
+  
+  // Handle Date objects
+  if (a instanceof Date && b instanceof Date) {
+    return a.getTime() === b.getTime();
+  }
   
   // Handle circular references
   if (visited.has(a)) {
     return visited.get(a) === b;
   }
   
-  // Handle arrays explicitly
+  // Handle arrays
   if (Array.isArray(a) || Array.isArray(b)) {
     if (!Array.isArray(a) || !Array.isArray(b)) return false;
     if (a.length !== b.length) return false;
@@ -114,6 +124,7 @@ export function isEqual(a: any, b: any, visited = new WeakMap()): boolean {
   
   visited.set(a, b);
   for (const key of keysA) {
+    if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
     if (!isEqual(a[key], b[key], visited)) return false;
   }
   return true;

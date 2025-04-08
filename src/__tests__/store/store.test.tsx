@@ -1,7 +1,7 @@
-import React, { useEffect, act, RefObject, useRef } from 'react';
-import { createStore } from '../index';
+import React, { act} from 'react';
 import { render } from '@testing-library/react';
-import { SetStoreData, Settings, UseStore } from '../types';
+import { createStore } from '../../index';
+import { GetterSettings, SetStoreData, UseStore } from '../../types';
 
 type TestStore = {
   data1: string;
@@ -42,7 +42,7 @@ const createTestComponent = ({
   rerendersCount: number[];
   index: number;
   selector?: string;
-  settings?: Settings;
+  settings?: GetterSettings;
 }) => {
   const setStoreDataRef = { current: null as SetStoreData<TestStore> | null };
 
@@ -51,7 +51,7 @@ const createTestComponent = ({
     setStoreDataRef.current = setData;
     getData(selector, settings);
 
-    useEffect(() => {
+    React.useEffect(() => {
       rerendersCount[index] = (rerendersCount[index] || 0) + 1;
     });
 
@@ -146,7 +146,7 @@ describe('Store', () => {
       expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([11]));
 
       // force rerender
-      act(() => setData1((prev) => prev, undefined, true));
+      act(() => setData1((prev) => prev, undefined, { forceRerender: true }));
       expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([12]));
     });
     // it('should only rerender component with matching selector', () => {});
