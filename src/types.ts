@@ -1,6 +1,7 @@
 export interface GetterSettings {
   observedSelectors?: string[];
   ignoredSelectors?: string[];
+  deepCompare?: boolean;
 }
 
 export interface SetterSettings {

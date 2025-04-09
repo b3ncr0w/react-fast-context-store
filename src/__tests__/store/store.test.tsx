@@ -149,6 +149,45 @@ describe('Store', () => {
       act(() => setData1((prev) => prev, undefined, { forceRerender: true }));
       expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([15]));
     });
+
+    it('should use deep comparison when deepCompare setting is enabled', () => {
+      const [StoreProvider, useStore] = createStore<TestStore>(initialData);
+      const rerendersCount: number[] = [];
+      
+      const [TestComponent1, getSetData1] = createTestComponent({
+        useStore,
+        rerendersCount,
+        index: 0,
+        selector: 'data2',
+        settings: { deepCompare: true },
+      });
+
+      act(() => {
+        render(
+          <StoreProvider>
+            <TestComponent1 />
+          </StoreProvider>
+        );
+      });
+
+      const setData1 = getSetData1();
+
+      // Initial render
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([1]));
+
+      // Update with same value (different reference) - should NOT rerender because values are deeply equal
+      act(() => setData1({ data1: 'initial2' }, 'data2'));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([1])); // Should stay at 1 because values are equal
+
+      // Update with different value - should rerender
+      act(() => setData1({ data1: 'changed' }, 'data2'));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([2]));
+
+      // Update with same value but different reference - should NOT rerender because values are deeply equal
+      act(() => setData1({ data1: 'changed' }, 'data2'));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([2])); // Should stay at 2 because values are equal
+    });
+
     // it('should only rerender component with matching selector', () => {});
     // it('should rerender component with parent selector when child changes', () => {});
     // it('should rerender child components when parent object changes', () => {});

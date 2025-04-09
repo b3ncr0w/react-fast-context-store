@@ -6,6 +6,7 @@ import {
   deepClone,
   getDataWithSelector,
   isEqual,
+  isEqualDeep,
   setDataWithSelector,
   useRerender,
 } from './storeUtils';
@@ -36,7 +37,10 @@ export function useStore<T = any>(
 
         // Check if the data has actually changed by comparing current and previous values
         const currentValue = getDataWithSelector(store.get(), baseSelector);
-        const dataChanged = !isEqual(currentValue, previousValueRef.current);
+        const dataChanged =
+          settings?.deepCompare === true
+            ? !isEqualDeep(currentValue, previousValueRef.current)
+            : !isEqual(currentValue, previousValueRef.current);
 
         // Skip update if data hasn't changed
         if (
@@ -86,7 +90,7 @@ export function useStore<T = any>(
 
         // If all checks pass, trigger a rerender and update the previous value reference
         rerender();
-        previousValueRef.current = currentValue;
+        previousValueRef.current = settings?.deepCompare === true ? deepClone(currentValue) : currentValue;
       };
       store.subscribe({ onUpdate, baseSelector: selector, settings });
 
@@ -95,7 +99,7 @@ export function useStore<T = any>(
       const data = getDataWithSelector(snapshot, selector);
 
       // Initialize previous value
-      previousValueRef.current = data;
+      previousValueRef.current = settings?.deepCompare === true ? deepClone(data) : data;
 
       return data;
     },

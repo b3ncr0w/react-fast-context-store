@@ -96,3 +96,46 @@ export function isEqual(a: any, b: any): boolean {
   
   return a === b;
 }
+
+export function isEqualDeep(a: any, b: any, visited = new WeakMap()): boolean {
+  // Handle primitive types and null/undefined
+  if (a === null || b === null || a === undefined || b === undefined) return false;
+  
+  // Handle primitive types (strings, numbers, booleans)
+  if (typeof a !== 'object' || typeof b !== 'object') {
+    return a === b;
+  }
+  
+  // Handle Date objects
+  if (a instanceof Date && b instanceof Date) {
+    return a.getTime() === b.getTime();
+  }
+  
+  // Handle circular references
+  if (visited.has(a)) {
+    return visited.get(a) === b;
+  }
+  
+  // Handle arrays
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    visited.set(a, b);
+    for (let i = 0; i < a.length; i++) {
+      if (!isEqualDeep(a[i], b[i], visited)) return false;
+    }
+    return true;
+  }
+  
+  // Handle objects
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  
+  visited.set(a, b);
+  for (const key of keysA) {
+    if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
+    if (!isEqualDeep(a[key], b[key], visited)) return false;
+  }
+  return true;
+}
