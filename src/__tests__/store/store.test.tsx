@@ -89,65 +89,65 @@ describe('Store', () => {
 
       // no value change
       act(() => setData1('initial1', 'data1'));
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([1]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([2]));
 
       // no object change
       act(() => setData1({ data1: 'initial2' }, 'data2'));
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([1]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([3]));
 
       // no array change
       act(() => setData1(['a', 'b', 'c'], 'array1'));
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([1]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([4]));
 
       // 0 level string with function
       act(() => setData1((prev) => ({ ...prev, data1: 'new1' })));
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([2]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([5]));
 
       // 0 level string directly
       act(() => setData1('new2', 'data1'));
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([3]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([6]));
 
       // 0 level object with function
       act(() =>
         setData1((prev) => ({ ...prev, data2: { data1: 'new3' } }))
       );
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([4]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([7]));
 
       // 0 level object directly
       act(() => setData1({ data1: 'new4' }, 'data2'));
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([5]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([8]));
 
       // 0 level array with function
       act(() => setData1((prev) => prev.slice(0, -1), 'array1'));
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([6]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([9]));
 
       // 0 level array directly
       act(() => setData1(['a', 'b', 'c', 'd'], 'array1'));
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([7]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([10]));
 
       // 1 level string with function
       act(() =>
         setData1((prev) => ({ ...prev, data2: { data1: 'new5' } }))
       );
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([8]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([11]));
 
       // 1 level string directly
       act(() => setData1('new6', 'data2.data1'));
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([9]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([12]));
 
       // 2 level string with function
       act(() =>
         setData1((prev) => ({ ...prev, data1: 'new7' }), 'data3.data2')
       );
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([10]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([13]));
 
       // 2 level string directly
       act(() => setData1('new8', 'data3.data2.data1'));
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([11]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([14]));
 
       // force rerender
       act(() => setData1((prev) => prev, undefined, { forceRerender: true }));
-      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([12]));
+      expect(JSON.stringify(rerendersCount)).toBe(JSON.stringify([15]));
     });
     // it('should only rerender component with matching selector', () => {});
     // it('should rerender component with parent selector when child changes', () => {});

@@ -39,7 +39,12 @@ export function useStore<T = any>(
         const dataChanged = !isEqual(currentValue, previousValueRef.current);
 
         // Skip update if data hasn't changed
-        if (dataChanged === false && !forceRerender) return;
+        if (
+          dataChanged === false &&
+          !forceRerender &&
+          baseSelector !== undefined
+        )
+          return;
 
         // Extract parent selectors for pattern matching
         const selectorParts = selector?.split('.').slice(0, -1);
@@ -70,7 +75,7 @@ export function useStore<T = any>(
           ) === false
         )
           return;
-        
+
         // Check if the update should be ignored based on ignored selectors
         // This allows for excluding specific parts of the store from updates
         if (
@@ -81,7 +86,7 @@ export function useStore<T = any>(
 
         // If all checks pass, trigger a rerender and update the previous value reference
         rerender();
-        previousValueRef.current = deepClone(currentValue);
+        previousValueRef.current = currentValue;
       };
       store.subscribe({ onUpdate, baseSelector: selector, settings });
 
@@ -90,7 +95,7 @@ export function useStore<T = any>(
       const data = getDataWithSelector(snapshot, selector);
 
       // Initialize previous value
-      previousValueRef.current = deepClone(data);
+      previousValueRef.current = data;
 
       return data;
     },
